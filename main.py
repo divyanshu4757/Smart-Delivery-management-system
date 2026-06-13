@@ -15,9 +15,6 @@ app = FastAPI()
 
 Base.metadata.create_all(bind=engine)
 
-#creating master admin
-
-admin.create_master_admin()
 
 app.include_router(admin.router)
 
