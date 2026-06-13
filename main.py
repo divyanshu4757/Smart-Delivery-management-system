@@ -8,7 +8,7 @@ from models.orders import Order
 from models.assignments import Assignment
 from database import SessionLocal
 from sqlalchemy import text
-from routes import admin
+from routes import admin, drivers
 
 app = FastAPI()
 
@@ -17,5 +17,7 @@ Base.metadata.create_all(bind=engine)
 
 
 app.include_router(admin.router)
+app.include_router(drivers.router)
+
 
 

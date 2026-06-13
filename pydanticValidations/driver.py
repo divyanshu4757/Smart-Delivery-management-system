@@ -1,8 +1,6 @@
 from pydantic import BaseModel,Field
 from enum import Enum
 from datetime import datetime
-
-from sqlalchemy import false
 from models.drivers import VehicleType
 
 class UserRole(str, Enum):
@@ -13,7 +11,7 @@ class DriverDetailsSchema(BaseModel):
     vehicle_type: VehicleType = Field(..., description="Must match one of your predefined VehicleType enum options")
     license_number: str = Field(..., min_length=5, max_length=30)
     max_capacity_kg: int = Field(..., gt=0, description="Maximum carrying capacity in kilograms")
-    available: bool = false
+    available: bool = False
 
 class DriverCreateRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
