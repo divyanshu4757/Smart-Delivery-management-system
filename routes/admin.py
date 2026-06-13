@@ -4,6 +4,7 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 from starlette import status
 from pydantic import BaseModel
+from models.drivers import Driver
 from models.users import User
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
@@ -11,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt ,JWTError
 from dotenv import load_dotenv
 import os
+from pydanticValidations.driver import DriverCreateRequest
 
 
 
@@ -88,6 +90,8 @@ def get_current_user(token:Annotated[str,Depends(Oauth2_bearer)]):
          return {'username':username,'user_id':user_id,'user_role':role}
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail="Could not validate user")
+    
+user_dependency=Annotated[dict,Depends(get_current_user)]
 
 
 @router.post('/login',status_code=status.HTTP_200_OK)
@@ -101,3 +105,39 @@ async def login_admin(form_data:Annotated[OAuth2PasswordRequestForm,Depends()],d
 
      
 
+@router.post('/create_driver', status_code=status.HTTP_201_CREATED)
+async def create_driver(user: user_dependency ,db:db_dependency, driver_request: DriverCreateRequest):
+    if user['user_role'] != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only admin can create driver accounts")
+    hashed_password = bcrypt_context.hash(driver_request.password)
+    new_user = User(
+        username=driver_request.username,
+        full_name=driver_request.full_name,
+        password_hash=hashed_password,
+        role=driver_request.role.value
+    )
+    try:
+        db.add(new_user)
+        db.flush()  # To get the new user's ID before committing
+        
+        new_driver = Driver(
+                            user_id=new_user.id,
+                            city_id=driver_request.driver_details.city_id,
+                            vehicle_type=driver_request.driver_details.vehicle_type,
+                            license_number=driver_request.driver_details.license_number,
+                            max_capacity_kg=driver_request.driver_details.max_capacity_kg,
+                            available=driver_request.driver_details.available
+                        )
+        db.add(new_driver)
+        db.commit()
+
+        return {"message": "Driver account  and Profile created successfully"}
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Database write failed: {str(e)}")
+
+
+        
+    
+    
