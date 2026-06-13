@@ -15,7 +15,7 @@ class User(Base):
         nullable=False
     )
 
-    is_active = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
 
     created_at = Column(
         DateTime(timezone=True),
