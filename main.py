@@ -8,7 +8,9 @@ from models.orders import Order
 from models.assignments import Assignment
 from database import SessionLocal
 from sqlalchemy import text
-from routes import admin, drivers
+from routes import admin, drivers, order
+from jobs.expired_assignments import expired_scheduler
+from jobs.rejected_assignments import rejected_scheduler
 
 app = FastAPI()
 
@@ -16,8 +18,17 @@ app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 
+
+
+
+@app.on_event("startup")
+async def startup():
+    expired_scheduler.start()
+    rejected_scheduler.start()
+
 app.include_router(admin.router)
 app.include_router(drivers.router)
+app.include_router(order.router)
 
 
 

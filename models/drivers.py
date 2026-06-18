@@ -3,6 +3,7 @@ from datetime import datetime, UTC
 
 from sqlalchemy import (
     Column,
+    Float,
     Integer,
     String,
     Boolean,
@@ -50,6 +51,12 @@ class Driver(Base):
 
     available = Column(Boolean, default=True)
 
+    latitude = Column(Float, nullable=True)
+
+    longitude = Column(Float, nullable=True)
+
+
+
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC)
@@ -60,3 +67,4 @@ class Driver(Base):
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC)
     )
+

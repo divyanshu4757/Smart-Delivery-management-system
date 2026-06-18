@@ -17,6 +17,7 @@ class AssignmentStatus(str, PyEnum):
     ACCEPTED = "ACCEPTED"
     REJECTED = "REJECTED"
     EXPIRED = "EXPIRED"
+    LEMON = "LEMON"
 
 
 class Assignment(Base):
@@ -40,6 +41,8 @@ class Assignment(Base):
         Enum(AssignmentStatus, name="assignment_status_enum"),
         nullable=False
     )
+
+    is_processed = Column(Integer, default=0)  # 0 for not processed, 1 for processed
 
     responded_at = Column(DateTime(timezone=True), nullable=True)
 
