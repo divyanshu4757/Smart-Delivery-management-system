@@ -88,4 +88,54 @@ async def create_order(db: db_dependency, order_details: create_order_request):
     return {"message": "Order created and assigned to driver", "order_id": new_order.id, "assigned_driver_id": closest_driver.driver_id}
 
 
+
+
+
+
+
+@router.put('/pickup_order/{assignment_id}', status_code=status.HTTP_200_OK)
+async def pickup_order(assignment_id: int, db: db_dependency, user: user_dependency):
+    if user['user_role'] != "DRIVER":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only drivers can pick up orders")
+    
+    driver = db.query(Driver).filter(Driver.user_id == user['user_id']).first()
+    if not driver:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver profile not found")
+    
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.driver_id == driver.id).first()
+    if not assignment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+    
+    order = db.query(Order).filter(Order.id == assignment.order_id).first()
+    if assignment.status != "ACCEPTED" or order.status != "ASSIGNED":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment is not accepted or not assigned to the requesting driver")
+    
+    order.status = "PICKED_UP"
+    db.commit()
+    
+    return {"message": "Order picked up successfully", "order_id": order.id ,"assignment_id": assignment.id}
+
+
+@router.put('/deliver_order/{assignment_id}', status_code=status.HTTP_200_OK)
+async def deliver_order(assignment_id: int, db: db_dependency, user: user_dependency):
+    if user['user_role'] != "DRIVER":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only drivers can deliver orders")
+    
+    driver = db.query(Driver).filter(Driver.user_id == user['user_id']).first()
+    if not driver:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver profile not found")
+    
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id, Assignment.driver_id == driver.id).first()
+    if not assignment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assignment not found")
+    
+    order = db.query(Order).filter(Order.id == assignment.order_id).first()
+    if assignment.status != "ACCEPTED" or order.status != "PICKED_UP":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assignment is not accepted or not picked up by the requesting driver")
+    
+    order.status = "DELIVERED"
+    db.commit()
+    
+    return {"message": "Order delivered successfully", "order_id": order.id ,"assignment_id": assignment.id}
+
     

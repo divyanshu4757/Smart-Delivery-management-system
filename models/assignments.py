@@ -17,7 +17,7 @@ class AssignmentStatus(str, PyEnum):
     ACCEPTED = "ACCEPTED"
     REJECTED = "REJECTED"
     EXPIRED = "EXPIRED"
-    LEMON = "LEMON"
+  
 
 
 class Assignment(Base):
