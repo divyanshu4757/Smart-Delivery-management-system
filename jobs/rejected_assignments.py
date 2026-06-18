@@ -31,6 +31,8 @@ def process_assignments():
             
             drivers_after_rejection = [driver for driver in available_drivers if driver.driver_id not in Rejected_driver_Ids]
             if not drivers_after_rejection:
+                                        assignment.is_processed = 1
+                                        order.status = "EXCEPTION"
                                         continue
             sorted_drivers = sorted(drivers_after_rejection, key=calculate_distance)
             closest_driver = sorted_drivers[0]

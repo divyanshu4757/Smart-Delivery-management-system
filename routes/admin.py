@@ -37,7 +37,7 @@ class TokenResponse(BaseModel):
 
 def get_db():
     db = SessionLocal()
-    print("1st print")
+    
     try:
         yield db
     finally:

@@ -17,6 +17,8 @@ def process_assignments():
             order = db.query(Order).filter(Order.id == assignment.order_id).first()
             available_drivers = get_available_drivers(db, order)
             if not available_drivers:
+                assignment.is_processed = 1
+                order.status = "EXCEPTION"
                 continue
             sorted_drivers = sorted(available_drivers, key=calculate_distance)
             closest_driver = sorted_drivers[0]
