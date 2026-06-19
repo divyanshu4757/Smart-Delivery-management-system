@@ -12,7 +12,12 @@ from models.assignments import Assignment
 from pydanticValidations.order import create_order_request
 from sqlalchemy import and_
 from haversine import haversine, Unit
+from routes.drivers import redis_client
+import logging
 
+
+
+logger = logging.getLogger("uvicorn.error")
 
 router=APIRouter(
     prefix='/order',
@@ -49,7 +54,16 @@ def get_available_drivers(db, order:Order):
     
  # Calculate distances and sort drivers
 def calculate_distance(driver):
-        driver_location = (driver.driver_lat, driver.driver_lng)
+        
+        location =redis_client.hgetall(f"driver:{driver.driver_id}")
+
+        
+        if not location:
+            return float('inf')
+
+
+
+        driver_location = (float(location.get("latitude")), float(location.get("longitude")))
         warehouse_location = (driver.warehouse_lat, driver.warehouse_lng)
         return haversine(driver_location, warehouse_location, unit=Unit.KILOMETERS)
 
@@ -78,11 +92,12 @@ async def create_order(db: db_dependency, order_details: create_order_request):
     db.commit()
 
     avaialble_drivers =  get_available_drivers(db, new_order)
-    print(avaialble_drivers)
+    logger.info(f"Available drivers for order {new_order.id}: {avaialble_drivers}")
     if not avaialble_drivers:
         raise HTTPException(status_code=404, detail="No available drivers found for this order")
     
     sorted_drivers = sorted(avaialble_drivers, key=calculate_distance)
+   
     closest_driver = sorted_drivers[0]
     assignment = assign_order_to_driver(db, new_order, closest_driver.driver_id)
     return {"message": "Order created and assigned to driver", "order_id": new_order.id, "assigned_driver_id": closest_driver.driver_id}

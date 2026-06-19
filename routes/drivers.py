@@ -7,7 +7,17 @@ from starlette import status
 from models.drivers import Driver
 from models.assignments import Assignment
 from models.orders import Order
-from routes.order import assign_order_to_driver
+
+import redis
+from pydanticValidations.location import Driver_Location
+
+
+redis_client = redis.Redis(
+    host="localhost",
+    port=6379,
+    decode_responses=True
+)
+
 
 
 
@@ -15,6 +25,43 @@ router=APIRouter(
     prefix='/drivers',
     tags=['driver operations']
 )
+
+
+
+
+@router.post("/driver_location", status_code=status.HTTP_200_OK)
+async def update_driver_location(request:Driver_Location,driver:user_dependency,db:db_dependency):
+    print("=====REQUEST BODY=====", request, flush=True)
+
+    driver_row = db.query(Driver).filter(Driver.user_id == driver['user_id']).first()
+    print(driver_row)
+    if not driver_row:
+        raise HTTPException(status_code=404, detail="Driver profile not found")
+    redis_client.hset(f"driver:{driver_row.id}",
+                      mapping={
+                          "latitude": request.latitude,
+                          "longitude": request.longitude 
+                      })
+    
+    return {"message": "Location updated successfully"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @router.put('/start_shift' ,status_code=status.HTTP_200_OK)
